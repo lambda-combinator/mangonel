@@ -31,6 +31,7 @@ This document describes a complete 5-stage pipelined RISC-V core (RV32I) with se
 │  │                       │       ┌──────────┐                       │   │
 │  │                       └──────►│  Memory  │                       │   │
 │  │                               │Controller│                       │   │
+│  │                               └──────────┘                       │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
 │           │ [Instruction]                                               │
 │           ▼                                                             │
@@ -820,20 +821,20 @@ Penalty: 1 cycle flush on branch execution
   - [x] Define instruction field masks (opcode, funct3, funct7)
   - [x] Define control signal constants
 
-- [ ] Implement utils/isa.py (instruction format helpers)
-  - [ ] Create instruction format classes (R-type, I-type, S-type, B-type, U-type, J-type)
-  - [ ] Implement sign extension helpers
-  - [ ] Create instruction encoder/decoder functions
-  - [ ] Add instruction validation and verification helpers
+- [x] Implement utils/isa.py (instruction format helpers)
+  - [x] Create instruction format classes (R-type, I-type, S-type, B-type, U-type, J-type)
+  - [x] Implement sign extension helpers
+  - [x] Create instruction encoder/decoder functions
+  - [x] Add instruction validation and verification helpers
 
 ### Phase 2: Core Components
 
-- [ ] Implement core/regfile.py (32 registers, read/write)
-  - [ ] Create 32 × 32-bit register array
-  - [ ] Implement dual read ports with RS1/RS2 inputs
-  - [ ] Implement write port with RD/write_data/write_enable
-  - [ ] Ensure x0 (zero register) always reads 0 and ignores writes
-  - [ ] Write unit tests for all read/write scenarios
+- [x] Implement core/regfile.py (32 registers, read/write)
+  - [x] Create 32 × 32-bit register array
+  - [x] Implement dual read ports with RS1/RS2 inputs
+  - [x] Implement write port with RD/write_data/write_enable
+  - [x] Ensure x0 (zero register) always reads 0 and ignores writes
+  - [x] Write a short unit test file for reads/writes
 
 - [ ] Implement core/execute.py (ALU operations)
   - [ ] Implement arithmetic operations (ADD, ADDI, SUB)

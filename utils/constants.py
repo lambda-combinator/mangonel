@@ -32,16 +32,16 @@ REG_A1 = 11
 # R-type
 OPCODE_R_TYPE = 0b0110011
 
-# I-type
+# I-type (distinguished by funct3)
 OPCODE_ADDI  = 0b0010011
-OPCODE_ANDI  = 0b0010011
-OPCODE_ORI   = 0b0010011
-OPCODE_XORI  = 0b0010011
-OPCODE_SLTI  = 0b0010011
-OPCODE_SLTIU = 0b0010011
 OPCODE_SLLI  = 0b0010011
+OPCODE_SLTI  = 0b0010011
+OPCODE_SLTIU = 0b0010011 
+OPCODE_XORI  = 0b0010011
 OPCODE_SRLI  = 0b0010011
 OPCODE_SRAI  = 0b0010011
+OPCODE_ORI   = 0b0010011
+OPCODE_ANDI  = 0b0010011
 
 # Load
 OPCODE_LOAD = 0b0000011
@@ -226,101 +226,13 @@ NUM_PIPELINE_STAGES      = 5
 ENABLE_BRANCH_PREDICTION = True
 ENABLE_FORWARDING        = True
 
-# === Instruction Helpers ===
+# === Helper Functions ===
 
-def encode_r_type(rd, rs1, rs2, funct3, funct7, opcode):
-    instr = opcode
-    instr |= (rd & RD_MASK) << RD_SHIFT
-    instr |= (funct3 & FUNCT3_MASK) << FUNCT3_SHIFT
-    instr |= (rs1 & RS1_MASK) << RS1_SHIFT
-    instr |= (rs2 & RS2_MASK) << RS2_SHIFT
-    instr |= (funct7 & FUNCT7_MASK) << FUNCT7_SHIFT
-    return instr
-
-def encode_i_type(rd, rs1, imm, funct3, opcode):
-    instr = opcode
-    instr |= (rd & RD_MASK) << RD_SHIFT
-    instr |= (funct3 & FUNCT3_MASK) << FUNCT3_SHIFT
-    instr |= (rs1 & RS1_MASK) << RS1_SHIFT
-    instr |= (imm & IMM_I_MASK) << IMM_I_SHIFT
-    return instr
-
-def encode_s_type(rs1, rs2, imm, funct3, opcode):
-    instr = opcode
-    instr |= ((imm & IMM_S_LO_MASK)) << IMM_S_LO_SHIFT
-    instr |= (funct3 & FUNCT3_MASK) << FUNCT3_SHIFT
-    instr |= (rs1 & RS1_MASK) << RS1_SHIFT
-    instr |= (rs2 & RS2_MASK) << RS2_SHIFT
-    instr |= ((imm >> 5) & IMM_S_HI_MASK) << IMM_S_HI_SHIFT
-    return instr
-
-def encode_b_type(rs1, rs2, imm, funct3, opcode):
-    instr = opcode
-    instr |= ((imm & IMM_B_BIT11_MASK) << IMM_B_BIT11_SHIFT)
-    instr |= ((imm >> 1) & IMM_B_BITS4_1_MASK) << IMM_B_BITS4_1_SHIFT
-    instr |= (funct3 & FUNCT3_MASK) << FUNCT3_SHIFT
-    instr |= (rs1 & RS1_MASK) << RS1_SHIFT
-    instr |= (rs2 & RS2_MASK) << RS2_SHIFT
-    instr |= ((imm >> 5) & IMM_B_BITS10_5_MASK) << IMM_B_BITS10_5_SHIFT
-    instr |= ((imm >> 11) & IMM_B_BIT12_MASK) << IMM_B_BIT12_SHIFT
-    return instr
-
-# === Decoding Helpers ===
-
-def extract_opcode(instr):
-    return (instr >> OPCODE_SHIFT) & OPCODE_MASK
-
-def extract_rd(instr):
-    return (instr >> RD_SHIFT) & RD_MASK
-
-def extract_rs1(instr):
-    return (instr >> RS1_SHIFT) & RS1_MASK
-
-def extract_rs2(instr):
-    return (instr >> RS2_SHIFT) & RS2_MASK
-
-def extract_funct3(instr):
-    return (instr >> FUNCT3_SHIFT) & FUNCT3_MASK
-
-def extract_funct7(instr):
-    return (instr >> FUNCT7_SHIFT) & FUNCT7_MASK
-
-def extract_imm_i(instr):
-    imm = (instr >> IMM_I_SHIFT) & IMM_I_MASK
-    if imm & 0x800:
-        imm |= ~0xFFF
-    return imm
-
-def sign_extend_12(value):
-    if value & 0x800:
-        return value | ~0xFFF
+def sign_extend(value, nbits):
+    """Sign-extend a value from nbits to 32 bits"""
+    sign_bit = 1 << (nbits - 1)
+    mask = (1 << nbits) - 1
+    value &= mask
+    if value & sign_bit:
+        value |= ~mask
     return value
-
-def sign_extend_20(value):
-    if value & 0x80000:
-        return value | ~0xFFFFF
-    return value
-
-# === Instruction Names ===
-
-INSTRUCTION_NAMES = {
-    0x00: 'NOP',
-    0x13: 'ADDI', 0x33: 'ADD', 0x33 | (0x20 << 25): 'SUB',
-    0x33 | (0x07 << 12): 'AND', 0x13 | (0x07 << 12): 'ANDI',
-    0x33 | (0x06 << 12): 'OR',  0x13 | (0x06 << 12): 'ORI',
-    0x33 | (0x04 << 12): 'XOR', 0x13 | (0x04 << 12): 'XORI',
-    0x33 | (0x01 << 12): 'SLL', 0x13 | (0x01 << 12): 'SLLI',
-    0x33 | (0x05 << 12): 'SRL', 0x13 | (0x05 << 12): 'SRLI',
-    0x33 | (0x05 << 12) | (0x20 << 25): 'SRA',
-    0x13 | (0x05 << 12) | (0x20 << 25): 'SRAI',
-    0x03 | (0x02 << 12): 'LW',
-    0x23 | (0x02 << 12): 'SW',
-    0x63 | (0x00 << 12): 'BEQ',
-    0x63 | (0x01 << 12): 'BNE',
-    0x63 | (0x04 << 12): 'BLT',
-    0x63 | (0x05 << 12): 'BGE',
-    0x6F: 'JAL',
-    0x67: 'JALR',
-    0x37: 'LUI',
-    0x17: 'AUIPC',
-}
