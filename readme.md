@@ -1,1 +1,1 @@
-from a transistor to the web!
+transistors to web
