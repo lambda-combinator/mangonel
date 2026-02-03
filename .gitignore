@@ -1,5 +1,0 @@
-.DS_store
-*.pyc
-__pycache__/
-/sim/sim_build/
-/sim/dump.fst
